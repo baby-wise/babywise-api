@@ -25,7 +25,7 @@ const newGroup = async (req,res)=>{
         try {            
             const groupDB = new Group_DB(group)
             await groupDB.save()
-            res.json(group)
+            res.json(groupDB)
         } catch (error) {
             res.status(500).json(error)
         }
