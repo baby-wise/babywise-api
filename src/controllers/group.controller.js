@@ -257,6 +257,96 @@ async function updateCameraStatus(groupId, cameraName, status) {
     }
 }
 
+const updateGroupSettings = async (req, res) => {
+    const { groupId, settings, UID } = req.body;
+    console.log('=== updateGroupSettings ===');
+    console.log('groupId:', groupId);
+    console.log('settings:', settings);
+    console.log('UID:', UID);
+
+    try {
+        const groupDB = await getGroupById(groupId);
+        const userDB = await getUserById(UID);
+        
+        if (!groupDB) {
+            return res.status(404).json({ error: "Group not found" });
+        }
+
+        if (!userDB) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // Verificar que el usuario sea admin del grupo
+        const group = new Group(groupDB);
+        if (!group.isAdmin(userDB)) {
+            console.log('User is not admin, rejecting settings update');
+            return res.status(403).json({ error: "Only admins can update group settings" });
+        }
+
+        // Validar que settings tenga la estructura correcta
+        const validSettings = {
+            cryDetection: settings.cryDetection !== undefined ? Boolean(settings.cryDetection) : groupDB.settings?.cryDetection || true,
+            audioVideoRecording: settings.audioVideoRecording !== undefined ? Boolean(settings.audioVideoRecording) : groupDB.settings?.audioVideoRecording || true,
+            motionDetection: settings.motionDetection !== undefined ? Boolean(settings.motionDetection) : groupDB.settings?.motionDetection || false
+        };
+
+        const result = await Group_DB.updateOne(
+            { _id: groupDB._id },
+            { $set: { settings: validSettings } }
+        );
+
+        console.log('Settings updated successfully:', validSettings);
+        
+        // Obtener el grupo actualizado
+        const updatedGroup = await getGroupById(groupId);
+        res.status(200).json(updatedGroup);
+        
+    } catch (error) {
+        console.error('Error updating group settings:', error);
+        res.status(500).json({ error: "Error updating group settings" });
+    }
+};
+
+async function getGroupSettings(groupId) {
+    try {
+        const group = await getGroupById(groupId);
+        if (!group) {
+            return {
+                cryDetection: true,
+                audioVideoRecording: true,
+                motionDetection: false
+            };
+        }
+        return group.settings || {
+            cryDetection: true,
+            audioVideoRecording: true,
+            motionDetection: false
+        };
+    } catch (error) {
+        console.error('Error getting group settings:', error);
+        return {
+            cryDetection: true,
+            audioVideoRecording: true,
+            motionDetection: false
+        };
+    }
+}
+
+const getGroupSettingsHandler = async (req, res) => {
+    const { groupId } = req.params;
+    console.log('=== getGroupSettings ===');
+    console.log('groupId:', groupId);
+
+    try {
+        const settings = await getGroupSettings(groupId);
+        res.status(200).json(settings);
+    } catch (error) {
+        console.error('Error getting group settings:', error);
+        res.status(500).json({ error: "Error getting group settings" });
+    }
+};
+
 export {groups, newGroup, addMember, removeMember, isAdmin, addAdmin, getGroupsForUser, 
-    getInviteCode, addCamera, getGroupById, upadeteRoleInGroup, updateCameraStatus
+    getInviteCode, addCamera, getGroupById, upadeteRoleInGroup, updateCameraStatus,
+    updateGroupSettings, getGroupSettings, getGroupSettingsHandler
 }
