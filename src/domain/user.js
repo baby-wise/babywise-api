@@ -5,6 +5,12 @@ const userSchema = new mongoose.Schema({
   UID: { type: String, required: true },
   pushToken: { type: String },
   platform: { type: String, enum: ['android', 'ios'] },
+  settings: {
+    type: {
+      allowNotifications: { type: Boolean, default: true }
+    },
+    default: { allowNotifications: true }
+  }
 });
 
 const User_DB = mongoose.model("User", userSchema);

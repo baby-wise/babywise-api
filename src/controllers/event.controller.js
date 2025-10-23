@@ -156,7 +156,9 @@ const receiveDetectionEvent = async (req, res) => {
         const groupDB = await Group_DB.findById(group).populate('users.user');
         
         const users = (groupDB.users || []).filter(u =>
-          u.user.pushToken && u.role !== 'camera'
+          u.user.pushToken && 
+          u.role !== 'camera' &&
+          (u.user.settings?.allowNotifications !== false)
         );
         for (const user of users) {
           const userData = user.user

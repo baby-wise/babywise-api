@@ -143,7 +143,7 @@ export const handleGetRecordings = async (req, res) => {
   }
   try {
     const result = await getRecordingsByRoom(room);
-    console.log(`[API] Grabaciones encontradas en el room ${room}: `);
+    console.log(`[API] Grabaciones encontradas en el room ${room}: ${JSON.stringify(result)}`);
     res.json({ recordingsByParticipant: result });
   } catch (err) {
     console.error('[API] Error listando grabaciones:', err);

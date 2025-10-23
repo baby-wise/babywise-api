@@ -2,13 +2,11 @@ import { AccessToken, AgentDispatchClient , WebhookReceiver, EgressClient, Track
 import { ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { s3Client } from './bucket.controller.js';
 import dotenv from 'dotenv';
-import { updateCameraStatus } from './group.controller.js';
+import { updateCameraStatus, getGroupSettings } from './group.controller.js';
 
 dotenv.config();
 
 const TOGGLE_AUDIO_TRACK_EGRESS = false;
-const TOGGLE_S3_HLS_EGRESS = true;
-const TOGGLE_AGENT_DISPATCH = true;
 
 // Livekit vars
 const apiKey = process.env.LIVEKIT_API_KEY;
@@ -102,24 +100,39 @@ const handleMediaServerEvent = async (req, res) => {
     const event = await receiver.receive(req.body, req.get('Authorization'));
     console.log('[Webhook] Evento recibido:', event.event);
 
+    // Algunos eventos (como egress_started, egress_ended, etc.) no tienen room
+    if (!event.room) {
+      console.log('[Webhook] Evento sin room, ignorando:', event.event);
+      return res.status(200).send('ok');
+    }
+
+    // Extraer groupId del nombre de la sala
+    const groupId = event.room.name.replace('baby-room-', '');
+    
+    // Obtener configuraciones del grupo
+    const settings = await getGroupSettings(groupId);
+    console.log('[Webhook] Group settings:', settings);
+
     // Iniciar TrackEgress para audio de camaras
     if (TOGGLE_AUDIO_TRACK_EGRESS && event.event === 'track_published' && event.participant.identity.startsWith('camera-')) {
         dispatchAudioTrackEgress(event);
     }
     
-    // Lanzar ParticipantEgress HLS a S3 (Backblaze) para cámaras al unirse
-    if (TOGGLE_S3_HLS_EGRESS && event.event === 'participant_joined' && event.participant.identity.startsWith('camera-')) {
+    // Lanzar ParticipantEgress HLS a S3 si está habilitado en settings del grupo
+    if (settings.audioVideoRecording && event.event === 'participant_joined' && event.participant.identity.startsWith('camera-')) {
+        console.log('[Webhook] Lanzando HLS Egress (audioVideoRecording enabled)');
         dispatchHLSParticipantEgress(event);
     }
 
     if(event.event === 'participant_left' && event.participant.identity.startsWith('camera-')) {
       console.log("Entrando en participant left")
       const camaraName = event.participant.identity.replace('camera-','')
-      const groupId = event.room.name.replace('baby-room-','')
       updateCameraStatus(groupId,camaraName,'OFFLINE')
     }
 
-    if(TOGGLE_AGENT_DISPATCH && event.event === 'room_started'){
+    // Lanzar agente para detección si está habilitado cry O motion detection en settings del grupo
+    if((settings.cryDetection || settings.motionDetection) && event.event === 'room_started'){
+        console.log('[Webhook] Lanzando agente (cryDetection o motionDetection enabled)');
         dispatchAgentForRoom(event.room.name);
     }
 

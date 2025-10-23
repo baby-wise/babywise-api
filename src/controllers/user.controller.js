@@ -65,4 +65,58 @@ async function getUserById(UID){
     return user
 }
 
-export {users, newUser, getUserById, registerPushToken}
+const updateUserSettings = async (req, res) => {
+    const { UID, settings } = req.body;
+    
+    if (!UID) {
+        return res.status(400).json({ error: 'UID es requerido' });
+    }
+    
+    if (!settings || typeof settings !== 'object') {
+        return res.status(400).json({ error: 'Settings es requerido y debe ser un objeto' });
+    }
+    
+    try {
+        const user = await User_DB.findOneAndUpdate(
+            { UID },
+            { $set: { settings } },
+            { new: true }
+        );
+        
+        if (!user) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        console.log('User settings updated:', UID, settings);
+        return res.status(200).json({ success: true, settings: user.settings });
+    } catch (error) {
+        console.error('Error actualizando configuración de usuario:', error);
+        return res.status(500).json({ error: 'Error interno al actualizar configuración' });
+    }
+};
+
+const getUserSettings = async (req, res) => {
+    const { UID } = req.params;
+    
+    if (!UID) {
+        return res.status(400).json({ error: 'UID es requerido' });
+    }
+    
+    try {
+        const user = await User_DB.findOne({ UID });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        // Si no tiene settings, devolver defaults
+        const settings = user.settings || { allowNotifications: true };
+        
+        return res.status(200).json({ success: true, settings });
+    } catch (error) {
+        console.error('Error obteniendo configuración de usuario:', error);
+        return res.status(500).json({ error: 'Error interno al obtener configuración' });
+    }
+};
+
+export {users, newUser, getUserById, registerPushToken, updateUserSettings, getUserSettings}

@@ -2,12 +2,17 @@ import mongoose from "mongoose";
 import { User_DB } from "./user.js";
 
 class Group {
-    constructor({_id, name, users, cameras, admins }) {
+    constructor({_id, name, users, cameras, admins, settings }) {
         this._id = _id
         this.name = name;
         this.users = users || [];
         this.cameras = cameras || [];
         this.admins = admins || [];
+        this.settings = settings || {
+            cryDetection: true,
+            audioVideoRecording: true,
+            motionDetection: false
+        };
     }
 
     addMember(newMember) {
@@ -57,8 +62,12 @@ const groupSchema = new mongoose.Schema({
     name: { type: String},
     status: {type: String, enum: ['ONLINE', 'OFFLINE'], default: 'OFFLINE'}
   }],
-  admins: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }]  
-  //preferencias: { type: mongoose.Schema.Types.ObjectId, ref: "Preferencias" }
+  admins: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  settings: {
+    cryDetection: { type: Boolean, default: true },
+    audioVideoRecording: { type: Boolean, default: true },
+    motionDetection: { type: Boolean, default: false }
+  }
 });
 
 function normalizeName(name) {
