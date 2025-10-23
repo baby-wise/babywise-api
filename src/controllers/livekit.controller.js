@@ -130,9 +130,9 @@ const handleMediaServerEvent = async (req, res) => {
       updateCameraStatus(groupId,camaraName,'OFFLINE')
     }
 
-    // Lanzar agente para detección de llanto si está habilitado en settings del grupo
-    if(settings.cryDetection && event.event === 'room_started'){
-        console.log('[Webhook] Lanzando agente (cryDetection enabled)');
+    // Lanzar agente para detección si está habilitado cry O motion detection en settings del grupo
+    if((settings.cryDetection || settings.motionDetection) && event.event === 'room_started'){
+        console.log('[Webhook] Lanzando agente (cryDetection o motionDetection enabled)');
         dispatchAgentForRoom(event.room.name);
     }
 
