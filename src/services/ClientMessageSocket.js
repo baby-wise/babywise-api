@@ -47,11 +47,16 @@ export function setUpClientMessageSocket(socket) {
         }
     });
     socket.on('rotate-camera', ({ group, cameraIdentity}) => {
-        console.log("Rotar camara activado")
-        const cameraClient = clients.find(c => c.role === 'camera' && c.group === group && c.cameraIdentity === cameraIdentity);
-        if (cameraClient) {
-            console.log("Enviado a la camara para que se rote")
-            cameraClient.socket.emit('rotate-camera');
+        const cameraClients = clients.filter(c => c.role === 'camera' && c.group === group && c.cameraIdentity === cameraIdentity);
+        if (cameraClients.length > 0) {
+            cameraClients.forEach(cam => {
+                if (cam.socket) {
+                    console.log("Enviado a la camara para que se rote")
+                    cam.socket.emit('rotate-camera');
+                }
+            });
+        } else {
+            console.warn(`[SOCKET] No se encontró cámara ${cameraIdentity} en grupo ${group} para rotate-camera`);
         }
     });
     // Manejar desconexión explícita de cámara (cuando sale de la pantalla)
