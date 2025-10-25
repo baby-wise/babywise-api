@@ -69,16 +69,16 @@ const getEventsByCamera = async (req, res) => {
   try {
     const { groupId, cameraName } = req.params;
 
-    // compute last 24 hours window ending at the next rounded hour (to include recent events)
+    // compute last 24 hours window ending at the next rounded hour in UTC (to include recent events)
     const now = new Date();
     const end = new Date(now);
-    end.setMinutes(0, 0, 0);
-    if (now.getMinutes() !== 0 || now.getSeconds() !== 0 || now.getMilliseconds() !== 0) {
-      // Si no estamos justo en la hora, sumar una hora para incluir la actual
-      end.setHours(end.getHours() + 1);
+    end.setUTCMinutes(0, 0, 0);
+    if (now.getUTCMinutes() !== 0 || now.getUTCSeconds() !== 0 || now.getUTCMilliseconds() !== 0) {
+      // Si no estamos justo en la hora UTC, sumar una hora para incluir la actual
+      end.setUTCHours(end.getUTCHours() + 1);
     }
     const start = new Date(end);
-    start.setHours(end.getHours() - 23);
+    start.setUTCHours(end.getUTCHours() - 23);
 
     // fetch events for this group and baby name within the time window
     const rawEvents = await Event_DB.find({
@@ -89,7 +89,7 @@ const getEventsByCamera = async (req, res) => {
 
     console.log(`[getEventsByCamera] Found ${rawEvents.length} events for camera ${cameraName} in group ${groupId} from ${start.toISOString()} to ${end.toISOString()}`);
 
-    // build 24 hourly buckets
+    // build 24 hourly buckets (all in UTC)
     const buckets = [];
     for (let i = 0; i < 24; i++) {
       const bucketStart = new Date(start.getTime() + i * 60 * 60 * 1000);
@@ -97,7 +97,7 @@ const getEventsByCamera = async (req, res) => {
       const inBucket = rawEvents.filter(ev => new Date(ev.date) >= bucketStart && new Date(ev.date) < bucketEnd);
       const crying = inBucket.filter(e => e.type === 'LLANTO').length;
       const movement = inBucket.filter(e => e.type === 'MOVIMIENTO').length;
-      buckets.push({ hour: bucketStart.getHours(), crying, movement, timestamp: bucketStart.toISOString() });
+      buckets.push({ hour: bucketStart.getUTCHours(), crying, movement, timestamp: bucketStart.toISOString() });
     }
 
     return res.status(200).json({ success: true, data: { events: buckets, period: '24h', generatedAt: new Date().toISOString() } });
