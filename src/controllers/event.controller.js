@@ -68,11 +68,15 @@ const getEventsByGroup = async (req, res) => {
 const getEventsByCamera = async (req, res) => {
   try {
     const { groupId, cameraName } = req.params;
-    
-    // compute last 24 hours window ending at current rounded hour
+
+    // compute last 24 hours window ending at the next rounded hour (to include recent events)
     const now = new Date();
     const end = new Date(now);
-    end.setMinutes(0,0,0);
+    end.setMinutes(0, 0, 0);
+    if (now.getMinutes() !== 0 || now.getSeconds() !== 0 || now.getMilliseconds() !== 0) {
+      // Si no estamos justo en la hora, sumar una hora para incluir la actual
+      end.setHours(end.getHours() + 1);
+    }
     const start = new Date(end);
     start.setHours(end.getHours() - 23);
 
@@ -80,8 +84,10 @@ const getEventsByCamera = async (req, res) => {
     const rawEvents = await Event_DB.find({
       group: groupId,
       baby: cameraName,
-      date: { $gte: start, $lte: new Date(end.getTime() + (60 * 60 * 1000)) }
+      date: { $gte: start, $lt: end }
     }).lean();
+
+    console.log(`[getEventsByCamera] Found ${rawEvents.length} events for camera ${cameraName} in group ${groupId} from ${start.toISOString()} to ${end.toISOString()}`);
 
     // build 24 hourly buckets
     const buckets = [];
@@ -106,14 +112,20 @@ const getEventsByCamera = async (req, res) => {
 const receiveDetectionEvent = async (req, res) => {
   console.log('receiveDetectionEvent called with body:', req.body);
   try {
-    const { group, baby, type, date } = req.body;
+    let { group, baby, type, date } = req.body;
     if (!group || !baby || !type) {
       return res.status(400).json({ error: 'Faltan campos requeridos: group, baby, type' });
     }
 
+    // Normalizar nombre del bebé quitando 'camera-' si está presente
+    if (typeof baby === 'string') {
+      baby = baby.replace(/^camera-/, '');
+    }
+
     // Buscar el segmento de grabación asociado al evento
     // El room name es el groupId, el participantIdentity es el nombre del bebé
-    const eventDate = date ? new Date(date) : new Date();
+  // Siempre usar la hora del backend para persistir el evento
+  const eventDate = new Date();
     let recordingUrl = null;
     let recordingSegmentName = null;
 
