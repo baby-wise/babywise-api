@@ -46,7 +46,14 @@ export function setUpClientMessageSocket(socket) {
             console.warn(`[SOCKET] No se encontró cámara ${cameraIdentity} en grupo ${group} para stop-audio`);
         }
     });
-
+    socket.on('rotate-camera', ({ group, cameraIdentity}) => {
+        console.log("Rotar camara activado")
+        const cameraClient = clients.find(c => c.role === 'camera' && c.group === group && c.cameraIdentity === cameraIdentity);
+        if (cameraClient) {
+            console.log("Enviado a la camara para que se rote")
+            cameraClient.socket.emit('rotate-camera');
+        }
+    });
     // Manejar desconexión explícita de cámara (cuando sale de la pantalla)
     socket.on('camera-disconnect', ({ groupId, cameraName }) => {
         console.log(`[SOCKET] Cámara ${cameraName} dejó de transmitir en el grupo ${groupId}`);
