@@ -22,11 +22,13 @@ export function setUpClientMessageSocket(socket) {
 
     // Nuevo: manejar play-audio
     socket.on('play-audio', ({ group, cameraIdentity, audioUrl }) => {
-        // Buscar la cámara destino en clients
-        const cameraClient = clients.find(c => c.role === 'camera' && c.group === group && c.cameraIdentity === cameraIdentity);
-        if (cameraClient && cameraClient.socket) {
-            cameraClient.socket.emit('play-audio', { audioUrl });
-            console.log(`[SOCKET] Enviado play-audio a cámara ${cameraIdentity}`);
+        // Buscar todas las cámaras destino en clients
+        const cameraClients = clients.filter(c => c.role === 'camera' && c.group === group && c.cameraIdentity === cameraIdentity);
+        if (cameraClients.length > 0) {
+            cameraClients.forEach(cam => {
+                if (cam.socket) cam.socket.emit('play-audio', { audioUrl });
+            });
+            console.log(`[SOCKET] Enviado play-audio a ${cameraClients.length} cámara(s) ${cameraIdentity}`);
         } else {
             console.warn(`[SOCKET] No se encontró cámara ${cameraIdentity} en grupo ${group} para play-audio`);
         }
@@ -34,10 +36,12 @@ export function setUpClientMessageSocket(socket) {
 
     // Nuevo: manejar stop-audio
     socket.on('stop-audio', ({ group, cameraIdentity }) => {
-        const cameraClient = clients.find(c => c.role === 'camera' && c.group === group && c.cameraIdentity === cameraIdentity);
-        if (cameraClient && cameraClient.socket) {
-            cameraClient.socket.emit('stop-audio');
-            console.log(`[SOCKET] Enviado stop-audio a cámara ${cameraIdentity}`);
+        const cameraClients = clients.filter(c => c.role === 'camera' && c.group === group && c.cameraIdentity === cameraIdentity);
+        if (cameraClients.length > 0) {
+            cameraClients.forEach(cam => {
+                if (cam.socket) cam.socket.emit('stop-audio');
+            });
+            console.log(`[SOCKET] Enviado stop-audio a ${cameraClients.length} cámara(s) ${cameraIdentity}`);
         } else {
             console.warn(`[SOCKET] No se encontró cámara ${cameraIdentity} en grupo ${group} para stop-audio`);
         }
