@@ -57,6 +57,16 @@ class Group {
         );
         return userEntry.permission
     }
+    updatePermissionsForMember(member, newPermissions) {
+        const userEntry = this.users.find(
+            entry => entry.user._id.toString() === member._id.toString()
+        );
+        // Actualizar los permisos que se pasaron
+        userEntry.permission = {
+            ...userEntry.permission,
+            ...newPermissions,
+        };
+    }
 }
 
 const groupSchema = new mongoose.Schema({
