@@ -346,7 +346,27 @@ const getGroupSettingsHandler = async (req, res) => {
     }
 };
 
+const getUserPermission = async (req, res) =>{
+    const { groupId, UID } = req.params;
+    console.log(`Obteniendo los permisos para el user: ${UID} en el grupo: ${groupId}`)
+    try {
+        const groupDB = await getGroupById(groupId)
+        const userDB = await getUserById(UID)
+        if(groupDB && userDB){//Verifico que exista el grupo y el usuario
+            const group = new Group(groupDB)
+            const permisos = group.getPermissionsForMember(userDB)
+            res.status(200).json(permisos)
+            
+        }else{
+            res.status(404).json({error: "Group or user not found"})
+        }
+    } catch (error) {
+        console.error('Error getting group settings:', error);
+        res.status(500).json({ error: "Error getting group settings" });
+    }
+}
+
 export {groups, newGroup, addMember, removeMember, isAdmin, addAdmin, getGroupsForUser, 
     getInviteCode, addCamera, getGroupById, upadeteRoleInGroup, updateCameraStatus,
-    updateGroupSettings, getGroupSettings, getGroupSettingsHandler
+    updateGroupSettings, getGroupSettings, getGroupSettingsHandler, getUserPermission
 }

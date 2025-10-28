@@ -51,12 +51,22 @@ class Group {
         const normName = normalizeName(name)
         return Object.values(this.cameras).some(c=> normalizeName(c.name) === normName) 
     }
+    getPermissionsForMember(member){
+        const userEntry = this.users.find(
+            entry => entry.user._id.toString() === member._id.toString()
+        );
+        return userEntry.permission
+    }
 }
 
 const groupSchema = new mongoose.Schema({
   name: { type: String, required: true },
   users: [{ user:{type: mongoose.Schema.Types.ObjectId, ref: "User"},
-            role: {type: String, enum: ['viewer', 'camera'], default: 'viewer'}
+            role: {type: String, enum: ['viewer', 'camera'], default: 'viewer'},
+            permission:{
+                camera: {type: Boolean, default: true},
+                viewer: {type: Boolean, default: true}
+            }
   }],
   cameras: [{
     name: { type: String},
