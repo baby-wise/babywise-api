@@ -346,7 +346,54 @@ const getGroupSettingsHandler = async (req, res) => {
     }
 };
 
+const getUserPermission = async (req, res) =>{
+    const { groupId, UID } = req.params;
+    console.log(`Obteniendo los permisos para el user: ${UID} en el grupo: ${groupId}`)
+    try {
+        const groupDB = await getGroupById(groupId)
+        const userDB = await getUserById(UID)
+        if(groupDB && userDB){//Verifico que exista el grupo y el usuario
+            const group = new Group(groupDB)
+            const permisos = group.getPermissionsForMember(userDB)
+            res.status(200).json(permisos)
+            
+        }else{
+            res.status(404).json({error: "Group or user not found"})
+        }
+    } catch (error) {
+        console.error('Error getting group settings:', error);
+        res.status(500).json({ error: "Error getting user permission" });
+    }
+}
+
+const updateUserPermission = async (req, res) =>{
+    const { groupId} = req.params;
+    const { UID, permissionType } = req.body;
+    console.log(`Cambiando los permisos para el user: ${UID} en el grupo: ${groupId}`)
+    try {
+        const groupDB = await getGroupById(groupId)
+        const userDB = await getUserById(UID)
+        if(groupDB && userDB){//Verifico que exista el grupo y el usuario
+            const group = new Group(groupDB)
+            group.updatePermissionsForMember(userDB,permissionType)
+            await Group_DB.updateOne(
+                { _id: groupDB._id },
+                    { $set: { 
+                        users: group.users
+                    }}
+            )
+            res.status(200).json(group)
+        }else{
+            res.status(404).json({error: "Group or user not found"})
+        }
+    } catch (error) {
+        console.error('Error getting group settings:', error);
+        res.status(500).json({ error: "Error updating user permission" });
+    }
+}
+
 export {groups, newGroup, addMember, removeMember, isAdmin, addAdmin, getGroupsForUser, 
     getInviteCode, addCamera, getGroupById, upadeteRoleInGroup, updateCameraStatus,
-    updateGroupSettings, getGroupSettings, getGroupSettingsHandler
+    updateGroupSettings, getGroupSettings, getGroupSettingsHandler, getUserPermission,
+    updateUserPermission
 }
