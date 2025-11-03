@@ -407,13 +407,73 @@ const getRules = async (req, res) =>{
         res.status(500).json({ error: "Error updating user permission" });
     }
 }
-const updateRules = async (req, res) =>{
+const addRules = async (req, res) =>{
     const { groupId} = req.params;
-    console.log(`Obteniendo las reglas para el grupo: ${groupId}`)
+    const { rule } = req.body
+
+    console.log(`Agregando reglas para el grupo: ${groupId}`)
     try {
         const groupDB = await getGroupById(groupId)
         if(groupDB ){//Verifico que exista el grupo
-            res.status(200).json(groupDB.rules)
+            const group = new Group(groupDB)
+            group.addRule(rule)
+            await Group_DB.updateOne(
+                { _id: groupDB._id },
+                    { $set: { 
+                        rules: group.rules
+                    }}
+            )
+            res.status(200).json(group.rules)
+        }else{
+            res.status(404).json({error: "Group not found"})
+        }
+    } catch (error) {
+        console.error('Error getting group settings:', error);
+        res.status(500).json({ error: "Error updating user permission" });
+    }
+}
+const updateRules = async (req, res) =>{
+    const { groupId} = req.params;
+    const { rule } = req.body
+
+    console.log(`Actualizando las reglas para el grupo: ${groupId}`)
+    try {
+        const groupDB = await getGroupById(groupId)
+        if(groupDB ){//Verifico que exista el grupo
+            const group = new Group(groupDB)
+            group.updateRule(rule)
+            await Group_DB.updateOne(
+                { _id: groupDB._id },
+                    { $set: { 
+                        rules: group.rules
+                    }}
+            )
+            res.status(200).json(group.rules)
+        }else{
+            res.status(404).json({error: "Group not found"})
+        }
+    } catch (error) {
+        console.error('Error getting group settings:', error);
+        res.status(500).json({ error: "Error updating user permission" });
+    }
+}
+const deleteRules = async (req, res) =>{
+    const { groupId} = req.params;
+    const { ruleId } = req.body
+
+    console.log(`Eliminando la regla ${ruleId} para el grupo: ${groupId}`)
+    try {
+        const groupDB = await getGroupById(groupId)
+        if(groupDB ){//Verifico que exista el grupo
+            const group = new Group(groupDB)
+            group.deleteRule(ruleId)
+            await Group_DB.updateOne(
+                { _id: groupDB._id },
+                    { $set: { 
+                        rules: group.rules
+                    }}
+            )
+            res.status(200).json(group.rules)
         }else{
             res.status(404).json({error: "Group not found"})
         }
@@ -426,5 +486,5 @@ const updateRules = async (req, res) =>{
 export {groups, newGroup, addMember, removeMember, isAdmin, addAdmin, getGroupsForUser, 
     getInviteCode, addCamera, getGroupById, upadeteRoleInGroup, updateCameraStatus,
     updateGroupSettings, getGroupSettings, getGroupSettingsHandler, getUserPermission,
-    updateUserPermission, getRules, updateRules
+    updateUserPermission, getRules, addRules, updateRules, deleteRules
 }

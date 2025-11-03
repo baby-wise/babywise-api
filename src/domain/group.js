@@ -3,7 +3,7 @@ import { User_DB } from "./user.js";
 import { Ruleset } from "firebase-admin/security-rules";
 
 class Group {
-    constructor({_id, name, users, cameras, admins, settings }) {
+    constructor({_id, name, users, cameras, admins, settings, rules }) {
         this._id = _id
         this.name = name;
         this.users = users || [];
@@ -14,6 +14,7 @@ class Group {
             audioVideoRecording: true,
             motionDetection: false
         };
+        this.rules = rules || []
     }
 
     addMember(newMember) {
@@ -67,6 +68,27 @@ class Group {
             ...userEntry.permission,
             ...newPermissions,
         };
+    }
+    addRule(rule){
+        this.rules.push(rule)
+    }
+    updateRule(rule) {
+        const index = this.rules.findIndex(
+        entry => entry._id.toString() === rule._id.toString()
+        );
+        
+        if (index !== -1) {
+            this.rules[index] = {
+                ...this.rules[index],
+                ...rule,
+            };
+        }
+    }
+
+    deleteRule(ruleId) {
+        this.rules = this.rules.filter(
+        entry => entry._id.toString() !== ruleId.toString()
+        );
     }
 }
 

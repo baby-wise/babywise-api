@@ -1,6 +1,6 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/authMiddleware.js';
-import { groups, newGroup, addMember, removeMember, isAdmin, addAdmin, getGroupsForUser, getInviteCode, addCamera, updateGroupSettings, getGroupSettingsHandler, getUserPermission, updateUserPermission, getRules, updateRules } from '../controllers/group.controller.js'
+import { groups, newGroup, addMember, removeMember, isAdmin, addAdmin, getGroupsForUser, getInviteCode, addCamera, updateGroupSettings, getGroupSettingsHandler, getUserPermission, updateUserPermission, getRules, updateRules, addRules, deleteRules } from '../controllers/group.controller.js'
 const router = express.Router();
 
 router.get('/groups', groups)
@@ -17,5 +17,7 @@ router.get('/secure/group-settings/:groupId', authenticateToken, getGroupSetting
 router.get('/secure/group/:groupId/user/:UID/permission',authenticateToken, getUserPermission)
 router.post('/secure/group/:groupId/permission',authenticateToken, updateUserPermission)
 router.get('/secure/group/:groupId/rules',getRules)
-router.post('/secure/group/:groupId/rules',updateRules)
+router.post('/secure/group/:groupId/rules',addRules)
+router.put('/secure/group/:groupId/rules',updateRules)
+router.put('/secure/group/:groupId/rules/delete',deleteRules)
 export {router}
