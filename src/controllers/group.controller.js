@@ -392,8 +392,39 @@ const updateUserPermission = async (req, res) =>{
     }
 }
 
+const getRules = async (req, res) =>{
+    const { groupId} = req.params;
+    console.log(`Obteniendo las reglas para el grupo: ${groupId}`)
+    try {
+        const groupDB = await getGroupById(groupId)
+        if(groupDB ){//Verifico que exista el grupo
+            res.status(200).json(groupDB.rules)
+        }else{
+            res.status(404).json({error: "Group not found"})
+        }
+    } catch (error) {
+        console.error('Error getting group settings:', error);
+        res.status(500).json({ error: "Error updating user permission" });
+    }
+}
+const updateRules = async (req, res) =>{
+    const { groupId} = req.params;
+    console.log(`Obteniendo las reglas para el grupo: ${groupId}`)
+    try {
+        const groupDB = await getGroupById(groupId)
+        if(groupDB ){//Verifico que exista el grupo
+            res.status(200).json(groupDB.rules)
+        }else{
+            res.status(404).json({error: "Group not found"})
+        }
+    } catch (error) {
+        console.error('Error getting group settings:', error);
+        res.status(500).json({ error: "Error updating user permission" });
+    }
+}
+
 export {groups, newGroup, addMember, removeMember, isAdmin, addAdmin, getGroupsForUser, 
     getInviteCode, addCamera, getGroupById, upadeteRoleInGroup, updateCameraStatus,
     updateGroupSettings, getGroupSettings, getGroupSettingsHandler, getUserPermission,
-    updateUserPermission
+    updateUserPermission, getRules, updateRules
 }

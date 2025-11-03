@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { User_DB } from "./user.js";
+import { Ruleset } from "firebase-admin/security-rules";
 
 class Group {
     constructor({_id, name, users, cameras, admins, settings }) {
@@ -87,7 +88,12 @@ const groupSchema = new mongoose.Schema({
     cryDetection: { type: Boolean, default: true },
     audioVideoRecording: { type: Boolean, default: true },
     motionDetection: { type: Boolean, default: false }
-  }
+  },
+  rules:[{
+    event: {type: String, enum: ["LLANTO", "MOVIMIENTO"]},
+    action: {type: String},
+    audio: {type: String}
+  }]
 });
 
 function normalizeName(name) {

@@ -51,7 +51,7 @@ export function setUpClientMessageSocket(socket) {
         if (cameraClients.length > 0) {
             cameraClients.forEach(cam => {
                 if (cam.socket) {
-                    console.log("Enviado a la camara para que se rote")
+                    console.log("Enviado a la camara para que se rote: ", cam.cameraIdentity)
                     cam.socket.emit('rotate-camera');
                 }
             });
