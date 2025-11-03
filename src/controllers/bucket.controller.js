@@ -151,3 +151,43 @@ export const handleGetRecordings = async (req, res) => {
   }
 }
 
+export async function getAudio(audioName, groupId) {
+  try {
+    if (!audioName || !groupId) {
+      throw new Error("audioName y groupId son requeridos");
+    }
+
+    const bucket = process.env.CF_BUCKET_NAME;
+    const prefix = `audio/${groupId}/`;
+
+    // Buscar cualquier archivo que empiece con el nombre indicado
+    const params = {
+      Bucket: bucket,
+      Prefix: prefix,
+      MaxKeys: 1000,
+    };
+
+    const resp = await s3Client.send(new ListObjectsV2Command(params));
+
+    if (!resp.Contents || resp.Contents.length === 0) {
+      throw new Error("No se encontraron audios en este grupo");
+    }
+
+    // Buscar el archivo que coincida (sin extensión)
+    const found = resp.Contents.find(obj => {
+      const fileName = obj.Key
+        .replace(prefix, "")
+        .replace(/\.[^/.]+$/, ""); // quita extensión
+      return fileName === audioName;
+    });
+
+    if (!found) {
+      throw new Error("Audio no encontrado");
+    }
+
+    return `${process.env.CF_PUBLIC_URL}${found.Key}`;
+  } catch (err) {
+    console.error("Error al obtener audio:", err);
+    throw err;
+  }
+}
