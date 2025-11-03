@@ -16,8 +16,8 @@ router.post('/secure/update-group-settings', authenticateToken, updateGroupSetti
 router.get('/secure/group-settings/:groupId', authenticateToken, getGroupSettingsHandler)
 router.get('/secure/group/:groupId/user/:UID/permission',authenticateToken, getUserPermission)
 router.post('/secure/group/:groupId/permission',authenticateToken, updateUserPermission)
-router.get('/secure/group/:groupId/rules',getRules)
-router.post('/secure/group/:groupId/rules',addRules)
-router.put('/secure/group/:groupId/rules',updateRules)
-router.put('/secure/group/:groupId/rules/delete',deleteRules)
+router.get('/secure/group/:groupId/rules',authenticateToken, getRules) 
+router.post('/secure/group/:groupId/rules',authenticateToken, addRules)
+router.put('/secure/group/:groupId/rules',authenticateToken, updateRules)
+router.put('/secure/group/:groupId/rules/delete',authenticateToken, deleteRules)
 export {router}
