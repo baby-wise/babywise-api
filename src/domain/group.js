@@ -112,9 +112,11 @@ const groupSchema = new mongoose.Schema({
     motionDetection: { type: Boolean, default: false }
   },
   rules:[{
-    event: {type: String, enum: ["LLANTO", "MOVIMIENTO"]},
-    action: {type: String},
-    audio: {type: String}
+    event: { type: String, enum: ["LLANTO", "MOVIMIENTO"], required: true },
+    action: { type: String, required: true },
+    audio: { type: String },
+    scope: { type: String, enum: ["GLOBAL", "CAMERA"], default: "GLOBAL" },
+    cameraIdentity: { type: String }, // si es scope === "CAMERA"
   }]
 });
 

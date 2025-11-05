@@ -483,23 +483,31 @@ const deleteRules = async (req, res) =>{
     }
 }
 
-async function groupActionForEvent(groupId, type) {
-    console.log("Buscando las reglas para el evento ", type)
-    try {
-        const groupDB = await getGroupById(groupId)
-        if(groupDB ){//Verifico que exista el grupo
-            const reglaParaEvento = groupDB.rules.find(r=> r.event === type)
-            if (reglaParaEvento){
-                return reglaParaEvento
-            }else{
-                return -1
-            }
-        }else{
-            return -1
-        }
-    } catch (error) {
-        console.error('Error getting group settings:', error);
+async function groupActionForEvent(groupId, eventType, cameraIdentity = null) {
+  console.log("Buscando las reglas para el evento:", eventType, "en cámara:", cameraIdentity);
+
+  try {
+    const groupDB = await getGroupById(groupId);
+    if (!groupDB) return -1;
+
+    // Buscar una regla específica para esa cámara
+    let regla = groupDB.rules.find( r =>
+        r.event === eventType &&
+        r.scope === "CAMERA" &&
+        r.cameraIdentity === cameraIdentity
+    );
+
+    // Si no hay una específica, buscar una global
+    if (!regla) {
+      regla = groupDB.rules.find(r => r.event === eventType && r.scope === "GLOBAL"
+      );
     }
+
+    return regla || -1;
+  } catch (error) {
+    console.error("Error obteniendo reglas:", error);
+    return -1;
+  }
 }
 
 export {groups, newGroup, addMember, removeMember, isAdmin, addAdmin, getGroupsForUser, 
