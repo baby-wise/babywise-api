@@ -216,7 +216,10 @@ async function ejecutarReglasAnteEvento(groupId, evento, baby) {
   console.log(`Buscando acciones configurables ante eventos para el grupo: ${groupId} y el evento: ${evento}`)
   let rule
   rule = await groupActionForEvent(groupId, evento, baby)
-  if(rule === -1) return //No hay reglas
+  if(rule === -1){
+    console.log(`No hay reglas configuradas para ${baby} en el grupo ${groupId} para el evento ${evento}`)
+    return //No hay reglas
+  } 
 
   if(rule.action === "reproducir_audio"){
     const camaraDelBebe = clients.filter(c => c.group === groupId && c.role === 'camera' && c.cameraIdentity === baby)
