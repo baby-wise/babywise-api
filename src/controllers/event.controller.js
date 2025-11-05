@@ -219,8 +219,6 @@ async function ejecutarReglasAnteEvento(groupId, evento, baby) {
   if(rule === -1) return //No hay reglas
 
   if(rule.action === "reproducir_audio"){
-    console.log(clients)
-  
     const camaraDelBebe = clients.filter(c => c.group === groupId && c.role === 'camera' && c.cameraIdentity === baby)
     const audioUrl = await getAudio(rule.audio, groupId)
     console.log("URL del audio: ", audioUrl)
