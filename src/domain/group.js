@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 import { User_DB } from "./user.js";
+import { Ruleset } from "firebase-admin/security-rules";
 
 class Group {
-    constructor({_id, name, users, cameras, admins, settings }) {
+    constructor({_id, name, users, cameras, admins, settings, rules }) {
         this._id = _id
         this.name = name;
         this.users = users || [];
@@ -13,6 +14,7 @@ class Group {
             audioVideoRecording: true,
             motionDetection: false
         };
+        this.rules = rules || []
     }
 
     addMember(newMember) {
@@ -67,6 +69,27 @@ class Group {
             ...newPermissions,
         };
     }
+    addRule(rule){
+        this.rules.push(rule)
+    }
+    updateRule(rule) {
+        const index = this.rules.findIndex(
+        entry => entry._id.toString() === rule._id.toString()
+        );
+        
+        if (index !== -1) {
+            this.rules[index] = {
+                ...this.rules[index],
+                ...rule,
+            };
+        }
+    }
+
+    deleteRule(ruleId) {
+        this.rules = this.rules.filter(
+        entry => entry._id.toString() !== ruleId.toString()
+        );
+    }
 }
 
 const groupSchema = new mongoose.Schema({
@@ -87,7 +110,14 @@ const groupSchema = new mongoose.Schema({
     cryDetection: { type: Boolean, default: true },
     audioVideoRecording: { type: Boolean, default: true },
     motionDetection: { type: Boolean, default: false }
-  }
+  },
+  rules:[{
+    event: { type: String, enum: ["LLANTO", "MOVIMIENTO"], required: true },
+    action: { type: String, required: true },
+    audio: { type: String },
+    scope: { type: String, enum: ["GLOBAL", "CAMERA"], default: "GLOBAL" },
+    cameraIdentity: { type: String }, // si es scope === "CAMERA"
+  }]
 });
 
 function normalizeName(name) {

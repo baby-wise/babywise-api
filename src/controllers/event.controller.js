@@ -6,6 +6,8 @@ import { Group, Group_DB } from "../domain/group.js"
 import { getUserById } from "./user.controller.js"
 import { getGroupById } from "./group.controller.js"
 import { getLatestSegmentWithDelay } from "../services/recordingService.js"
+import { groupActionForEvent } from './group.controller.js';
+import { getAudio } from './bucket.controller.js';
 
 // Cooldown en memoria para notificaciones push
 const lastPushSent = {}; // { [key]: timestamp }
@@ -122,6 +124,10 @@ const receiveDetectionEvent = async (req, res) => {
       baby = baby.replace(/^camera-/, '');
     }
 
+    //Ejecutar reglas ante evento
+    ejecutarReglasAnteEvento(group,type, baby)
+  
+
     // Buscar el segmento de grabación asociado al evento
     // El room name es el groupId, el participantIdentity es el nombre del bebé
   // Siempre usar la hora del backend para persistir el evento
@@ -205,5 +211,28 @@ const receiveDetectionEvent = async (req, res) => {
     return res.status(500).json({ error: 'Error interno al procesar evento' });
   }
 };
+
+async function ejecutarReglasAnteEvento(groupId, evento, baby) {
+  console.log(`Buscando acciones configurables ante eventos para el grupo: ${groupId} y el evento: ${evento}`)
+  let rule
+  rule = await groupActionForEvent(groupId, evento, baby)
+  if(rule === -1){
+    console.log(`No hay reglas configuradas para ${baby} en el grupo ${groupId} para el evento ${evento}`)
+    return //No hay reglas
+  } 
+
+  if(rule.action === "reproducir_audio"){
+    const camaraDelBebe = clients.filter(c => c.group === groupId && c.role === 'camera' && c.cameraIdentity === baby)
+    const audioUrl = await getAudio(rule.audio, groupId)
+
+    if(camaraDelBebe.length > 0 && audioUrl){
+       camaraDelBebe.forEach(cam => {
+        console.log("Enviando a: ",cam.cameraIdentity)
+        if (cam.socket) cam.socket.emit('play-audio', { audioUrl });
+      });
+    }
+  }
+  return
+}
 
 export { events, newEvent, getEventsByGroup, getEventsByCamera, receiveDetectionEvent };

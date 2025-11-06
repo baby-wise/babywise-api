@@ -392,8 +392,126 @@ const updateUserPermission = async (req, res) =>{
     }
 }
 
+const getRules = async (req, res) =>{
+    const { groupId} = req.params;
+    console.log(`Obteniendo las reglas para el grupo: ${groupId}`)
+    try {
+        const groupDB = await getGroupById(groupId)
+        if(groupDB ){//Verifico que exista el grupo
+            res.status(200).json(groupDB.rules)
+        }else{
+            res.status(404).json({error: "Group not found"})
+        }
+    } catch (error) {
+        console.error('Error getting group settings:', error);
+        res.status(500).json({ error: "Error updating user permission" });
+    }
+}
+const addRules = async (req, res) =>{
+    const { groupId} = req.params;
+    const { rule } = req.body
+
+    console.log(`Agregando reglas para el grupo: ${groupId}`)
+    try {
+        const groupDB = await getGroupById(groupId)
+        if(groupDB ){//Verifico que exista el grupo
+            const group = new Group(groupDB)
+            group.addRule(rule)
+            await Group_DB.updateOne(
+                { _id: groupDB._id },
+                    { $set: { 
+                        rules: group.rules
+                    }}
+            )
+            res.status(200).json(group.rules)
+        }else{
+            res.status(404).json({error: "Group not found"})
+        }
+    } catch (error) {
+        console.error('Error getting group settings:', error);
+        res.status(500).json({ error: "Error updating user permission" });
+    }
+}
+const updateRules = async (req, res) =>{
+    const { groupId} = req.params;
+    const { rule } = req.body
+
+    console.log(`Actualizando las reglas para el grupo: ${groupId}`)
+    try {
+        const groupDB = await getGroupById(groupId)
+        if(groupDB ){//Verifico que exista el grupo
+            const group = new Group(groupDB)
+            group.updateRule(rule)
+            await Group_DB.updateOne(
+                { _id: groupDB._id },
+                    { $set: { 
+                        rules: group.rules
+                    }}
+            )
+            res.status(200).json(group.rules)
+        }else{
+            res.status(404).json({error: "Group not found"})
+        }
+    } catch (error) {
+        console.error('Error getting group settings:', error);
+        res.status(500).json({ error: "Error updating user permission" });
+    }
+}
+const deleteRules = async (req, res) =>{
+    const { groupId} = req.params;
+    const { ruleId } = req.body
+
+    console.log(`Eliminando la regla ${ruleId} para el grupo: ${groupId}`)
+    try {
+        const groupDB = await getGroupById(groupId)
+        if(groupDB ){//Verifico que exista el grupo
+            const group = new Group(groupDB)
+            group.deleteRule(ruleId)
+            await Group_DB.updateOne(
+                { _id: groupDB._id },
+                    { $set: { 
+                        rules: group.rules
+                    }}
+            )
+            res.status(200).json(group.rules)
+        }else{
+            res.status(404).json({error: "Group not found"})
+        }
+    } catch (error) {
+        console.error('Error getting group settings:', error);
+        res.status(500).json({ error: "Error updating user permission" });
+    }
+}
+
+async function groupActionForEvent(groupId, eventType, cameraIdentity = null) {
+  console.log("Buscando las reglas para el evento:", eventType, "en cámara:", cameraIdentity);
+
+  try {
+    const groupDB = await getGroupById(groupId);
+    if (!groupDB) return -1;
+
+    // Buscar una regla específica para esa cámara
+    let regla = groupDB.rules.find( r =>
+        r.event === eventType &&
+        r.scope === "CAMERA" &&
+        r.cameraIdentity === cameraIdentity
+    );
+
+    // Si no hay una específica, buscar una global
+    if (!regla) {
+      regla = groupDB.rules.find(r => r.event === eventType && r.scope === "GLOBAL"
+      );
+    }
+
+    return regla || -1;
+  } catch (error) {
+    console.error("Error obteniendo reglas:", error);
+    return -1;
+  }
+}
+
 export {groups, newGroup, addMember, removeMember, isAdmin, addAdmin, getGroupsForUser, 
     getInviteCode, addCamera, getGroupById, upadeteRoleInGroup, updateCameraStatus,
     updateGroupSettings, getGroupSettings, getGroupSettingsHandler, getUserPermission,
-    updateUserPermission
+    updateUserPermission, getRules, addRules, updateRules, deleteRules, groupActionForEvent
 }
