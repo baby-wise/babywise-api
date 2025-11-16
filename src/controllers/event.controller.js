@@ -184,7 +184,7 @@ const receiveDetectionEvent = async (req, res) => {
             token: userData.pushToken,
             notification: {
               title: `Evento detectado`, 
-              body: `${type} de ${baby} a las ${event.date.toLocaleTimeString()}`,
+              body: `${type} de ${baby}`,
             },
             data: {
               group: String(group),
